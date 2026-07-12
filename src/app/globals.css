@@ -1,12 +1,20 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --panel-surface: #fcfcfb;
+  --panel-ink: #0b0b0b;
+  --panel-ink-secondary: #52514e;
+  --panel-accent: #2a78d6;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --panel-surface: #1a1a19;
+    --panel-ink: #ffffff;
+    --panel-ink-secondary: #c3c2b7;
+    --panel-accent: #3987e5;
   }
 }
 
