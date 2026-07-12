@@ -10,6 +10,7 @@ import { StationMarkers } from "./StationMarkers";
 import { StationInfoWindow } from "./StationInfoWindow";
 import { LayerSwitcher } from "./LayerSwitcher";
 import { Legend } from "./Legend";
+import { StatusBar } from "./StatusBar";
 import type { LayerKind, TodaySummary } from "@/types/amedas";
 
 const JAPAN_CENTER = { lat: 36.5, lng: 137.5 };
@@ -86,6 +87,11 @@ export function WeatherMap() {
       </GoogleMap>
       <LayerSwitcher value={activeLayer} onChange={setActiveLayer} />
       <Legend layer={activeLayer} />
+      <StatusBar
+        isLoading={stationsQuery.isLoading || observationsQuery.isLoading}
+        isError={stationsQuery.isError || observationsQuery.isError}
+        latestTime={observationsQuery.data?.latestTime}
+      />
     </div>
   );
 }
