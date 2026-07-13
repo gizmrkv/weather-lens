@@ -1,24 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Map as GoogleMap } from "@vis.gl/react-google-maps";
+import dynamic from "next/dynamic";
 import { useStations } from "@/hooks/useStations";
 import { useLatestObservations } from "@/hooks/useLatestObservations";
 import { useTodaySummaries } from "@/hooks/useStationToday";
 import { MAJOR_STATION_IDS } from "@/lib/majorStations";
-import { StationMarkers } from "./StationMarkers";
-import { StationInfoWindow } from "./StationInfoWindow";
 import { LayerSwitcher } from "./LayerSwitcher";
 import { Legend } from "./Legend";
 import { StatusBar } from "./StatusBar";
 import type { LayerKind, TodaySummary } from "@/types/amedas";
 
-const JAPAN_CENTER = { lat: 36.5, lng: 137.5 };
-const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID";
+const LeafletMap = dynamic(() => import("./LeafletMap"), {
+  ssr: false,
+});
 
 export function WeatherMap() {
   const [activeLayer, setActiveLayer] = useState<LayerKind>("currentTemp");
-  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
   const [extraTodayIds, setExtraTodayIds] = useState<string[]>([]);
 
   const stationsQuery = useStations();
@@ -31,60 +29,31 @@ export function WeatherMap() {
 
   const todaySummaries = useTodaySummaries(todayStationIds);
 
-  const todayById = useMemo(() => {
-    const map = new Map<string, TodaySummary>();
+  const { todayById, todayLoadingIds } = useMemo(() => {
+    const byId = new Map<string, TodaySummary>();
+    const loadingIds = new Set<string>();
     todayStationIds.forEach((id, i) => {
-      const data = todaySummaries[i]?.data;
-      if (data) map.set(id, data);
+      const result = todaySummaries[i];
+      if (result?.data) byId.set(id, result.data);
+      else if (result?.isLoading) loadingIds.add(id);
     });
-    return map;
+    return { todayById: byId, todayLoadingIds: loadingIds };
   }, [todayStationIds, todaySummaries]);
 
-  const stationsById = useMemo(() => {
-    const map = new Map(stationsQuery.data?.map((s) => [s.id, s]));
-    return map;
-  }, [stationsQuery.data]);
-
-  const selectedTodayResult = useMemo(() => {
-    if (!selectedStationId) return undefined;
-    const idx = todayStationIds.indexOf(selectedStationId);
-    return idx >= 0 ? todaySummaries[idx] : undefined;
-  }, [selectedStationId, todayStationIds, todaySummaries]);
-
   function handleMarkerClick(stationId: string) {
-    setSelectedStationId(stationId);
     setExtraTodayIds((prev) => (prev.includes(stationId) ? prev : [...prev, stationId]));
   }
 
-  const selectedStation = selectedStationId ? stationsById.get(selectedStationId) : undefined;
-
   return (
     <div style={{ position: "fixed", inset: 0 }}>
-      <GoogleMap
-        mapId={MAP_ID}
-        defaultCenter={JAPAN_CENTER}
-        defaultZoom={5}
-        gestureHandling="greedy"
-        disableDefaultUI={false}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <StationMarkers
-          stations={stationsQuery.data ?? []}
-          observations={observationsQuery.data?.observations ?? {}}
-          todayById={todayById}
-          activeLayer={activeLayer}
-          onMarkerClick={handleMarkerClick}
-        />
-        {selectedStation && (
-          <StationInfoWindow
-            station={selectedStation}
-            observation={observationsQuery.data?.observations[selectedStation.id]}
-            today={selectedTodayResult?.data ?? undefined}
-            todayLoading={selectedTodayResult?.isLoading ?? false}
-            onClose={() => setSelectedStationId(null)}
-          />
-        )}
-      </GoogleMap>
+      <LeafletMap
+        stations={stationsQuery.data ?? []}
+        observations={observationsQuery.data?.observations ?? {}}
+        todayById={todayById}
+        todayLoadingIds={todayLoadingIds}
+        activeLayer={activeLayer}
+        onMarkerClick={handleMarkerClick}
+      />
       <LayerSwitcher value={activeLayer} onChange={setActiveLayer} />
       <Legend layer={activeLayer} />
       <StatusBar

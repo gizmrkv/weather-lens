@@ -1,6 +1,6 @@
 "use client";
 
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
+import { CircleMarker, Popup } from "react-leaflet";
 import { colorFor } from "@/lib/colorScale";
 import type {
   LatestObservation,
@@ -13,6 +13,7 @@ interface StationMarkersProps {
   stations: StationMeta[];
   observations: Record<string, LatestObservation>;
   todayById: Map<string, TodaySummary>;
+  todayLoadingIds: Set<string>;
   activeLayer: LayerKind;
   onMarkerClick: (stationId: string) => void;
 }
@@ -21,6 +22,7 @@ export function StationMarkers({
   stations,
   observations,
   todayById,
+  todayLoadingIds,
   activeLayer,
   onMarkerClick,
 }: StationMarkersProps) {
@@ -46,25 +48,39 @@ export function StationMarkers({
 
         const color = colorFor(activeLayer, value);
         const hasValue = value != null;
+        const today = todayById.get(station.id);
+        const todayLoading = todayLoadingIds.has(station.id);
 
         return (
-          <AdvancedMarker
+          <CircleMarker
             key={station.id}
-            position={{ lat: station.lat, lng: station.lon }}
-            onClick={() => onMarkerClick(station.id)}
+            center={[station.lat, station.lon]}
+            radius={hasValue ? 7 : 5}
+            pathOptions={{
+              color: hasValue ? "#fcfcfb" : "#898781",
+              weight: hasValue ? 2 : 1.5,
+              fillColor: color,
+              fillOpacity: 1,
+            }}
+            eventHandlers={{ click: () => onMarkerClick(station.id) }}
           >
-            <div
-              style={{
-                width: hasValue ? 14 : 10,
-                height: hasValue ? 14 : 10,
-                borderRadius: "50%",
-                background: color,
-                border: hasValue ? "2px solid #fcfcfb" : "1.5px solid #898781",
-                boxShadow: "0 0 2px rgba(0,0,0,0.4)",
-                cursor: "pointer",
-              }}
-            />
-          </AdvancedMarker>
+            <Popup>
+              <div style={{ fontSize: 13, lineHeight: 1.7, minWidth: 150 }}>
+                <strong>{station.name}</strong>
+                <div>気温: {obs?.temp != null ? `${obs.temp}℃` : "—"}</div>
+                <div>湿度: {obs?.humidity != null ? `${obs.humidity}%` : "—"}</div>
+                <div>
+                  本日最高:{" "}
+                  {today ? `${today.max}℃ (${today.maxTime})` : todayLoading ? "取得中…" : "—"}
+                </div>
+                <div>
+                  本日最低:{" "}
+                  {today ? `${today.min}℃ (${today.minTime})` : todayLoading ? "取得中…" : "—"}
+                </div>
+                <div>本日平均: {today ? `${today.avg.toFixed(1)}℃` : todayLoading ? "取得中…" : "—"}</div>
+              </div>
+            </Popup>
+          </CircleMarker>
         );
       })}
     </>

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "weather-lens",
-  description: "アメダス観測地点の気象データをGoogle Map上に色分け表示する",
+  description: "アメダス観測地点の気象データを地図上に色分け表示する",
 };
 
 export default function RootLayout({
