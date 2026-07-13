@@ -20,6 +20,7 @@ export function LayerSwitcher({ value, onChange }: LayerSwitcherProps) {
       aria-label="表示するレイヤーの選択"
       style={{
         position: "absolute",
+        zIndex: 1000,
         top: 12,
         left: 12,
         maxWidth: "calc(100vw - 24px)",

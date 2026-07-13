@@ -39,6 +39,7 @@ export function Legend({ layer }: LegendProps) {
     <div
       style={{
         position: "absolute",
+        zIndex: 1000,
         bottom: 24,
         left: 12,
         width: 200,

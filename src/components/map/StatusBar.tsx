@@ -25,6 +25,7 @@ export function StatusBar({ isLoading, isError, latestTime }: StatusBarProps) {
     <div
       style={{
         position: "absolute",
+        zIndex: 1000,
         top: 12,
         left: "50%",
         transform: "translateX(-50%)",
